@@ -22,13 +22,10 @@ public class TopDownCharacterController : MonoBehaviour
         _rb.freezeRotation = true;
     }
 
-    private void Update()
-    {
-        // Input en Update para no perder frames
-        float h = Input.GetAxisRaw("Horizontal");
-        float v = Input.GetAxisRaw("Vertical");
+    public void Move(Vector2 input)
+    {      
 
-        if (h == 0f && v == 0f)
+        if (input.x == 0f && input.y == 0f)
         {
             _moveDir = Vector3.zero;
             return;
@@ -42,7 +39,7 @@ public class TopDownCharacterController : MonoBehaviour
         camForward.Normalize();
         camRight.Normalize();
 
-        _moveDir = (camForward * v + camRight * h).normalized;
+        _moveDir = (camForward * input.y + camRight * input.x).normalized;
     }
 
     private void FixedUpdate()

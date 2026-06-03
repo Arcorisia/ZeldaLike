@@ -21,12 +21,6 @@ public class Attack : MonoBehaviour
             }
         }        
     }
-    void Update()
-    {
-        if(Input.GetKeyDown(KeyCode.Space))
-        {
-            PerformAttack();
-        }
-    }
+    
 
 }
