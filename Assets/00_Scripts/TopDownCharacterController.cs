@@ -10,7 +10,7 @@ public class TopDownCharacterController : MonoBehaviour
     [SerializeField] private Camera isoCamera;
 
     private Rigidbody _rb;
-    private Vector3 _moveDir;
+    private Vector3 _moveDir;   
 
     private void Awake()
     {
@@ -23,7 +23,7 @@ public class TopDownCharacterController : MonoBehaviour
     }
 
     public void Move(Vector2 input)
-    {      
+    {            
 
         if (input.x == 0f && input.y == 0f)
         {
