@@ -15,9 +15,18 @@ public class AnimationCharacter : MonoBehaviour
     void Update()
     {
         animator.SetBool("Attack", isAttacking);
-        if(isAttacking) return; // Evitar actualizar la velocidad durante el ataque
+        if(isAttacking)
+        {
+            animator.SetBool("Idle", false);
+            animator.SetFloat("Speed", 0f);
+            return; // Evitar actualizar la velocidad durante el ataque
+        }
+
         Vector3 rbVel = rb.linearVelocity;
-        float speed = MathF.Abs(rbVel.x) + MathF.Abs(rbVel.z);
+        float speed = Mathf.Abs(rbVel.x) + Mathf.Abs(rbVel.z);
+        bool isIdle = speed < 0.01f;
+
+        animator.SetBool("Idle", isIdle);
         animator.SetFloat("Speed", speed);
     }
 }
