@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody))]
 public class TopDownCharacterController : MonoBehaviour
 {
     [Header("Movement")]
@@ -8,43 +9,52 @@ public class TopDownCharacterController : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private Camera isoCamera;
-    AnimationCharacter animationCharacter;
-     
+    [Tooltip("Assign a child transform that contains the visible mesh if the model pivot is offset from the collider.")]
+    [SerializeField] private Transform visualRoot;
+    [Tooltip("Rotation offset used when the model forward axis is not aligned with the local Z axis.")]
+    [SerializeField] private Vector3 meshRotationOffset = Vector3.zero;
 
     private Rigidbody _rb;
-    private Vector3 _moveDir;   
-    void Start()   
-    {
-        animationCharacter = GetComponent<AnimationCharacter>();
-    }
+    private Vector3 _moveDirection = Vector3.zero;
+    private Quaternion _visualRotationOffset = Quaternion.identity;
+
     private void Awake()
     {
         _rb = GetComponent<Rigidbody>();
+        _rb.constraints = visualRoot != null
+            ? RigidbodyConstraints.FreezeRotation
+            : RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+
         if (isoCamera == null)
             isoCamera = Camera.main;
 
-        // Evitar que la física tumbe al personaje
-        _rb.freezeRotation = true;
+        if (visualRoot != null)
+        {
+            _visualRotationOffset = Quaternion.Euler(meshRotationOffset);
+            visualRoot.rotation = transform.rotation * _visualRotationOffset;
+        }
     }
 
     public void Move(Vector2 input)
-    {            
-        
-        if (input.x == 0f && input.y == 0f)
+    {
+        if (isoCamera == null)
         {
-            _moveDir = Vector3.zero;
-            return;
+            isoCamera = Camera.main;
+            if (isoCamera == null)
+                return;
         }
 
-        Vector3 camForward = isoCamera.transform.forward;
-        Vector3 camRight   = isoCamera.transform.right;
+        Vector3 forward = isoCamera.transform.forward;
+        Vector3 right = isoCamera.transform.right;
 
-        camForward.y = 0f;
-        camRight.y   = 0f;
-        camForward.Normalize();
-        camRight.Normalize();
+        forward.y = 0f;
+        right.y = 0f;
 
-        _moveDir = (camForward * input.y + camRight * input.x).normalized;
+        forward.Normalize();
+        right.Normalize();
+
+        Vector3 direction = right * input.x + forward * input.y;
+        _moveDirection = direction.sqrMagnitude > 0.001f ? direction.normalized : Vector3.zero;
     }
 
     private void FixedUpdate()
@@ -55,28 +65,18 @@ public class TopDownCharacterController : MonoBehaviour
 
     private void HandleMovement()
     {
-        if(animationCharacter.isAttacking) 
-        {
-            _rb.linearVelocity = Vector3.zero;
-            return; // Evitar moverse durante el ataque
-        }
-        // Preservar velocidad Y (gravedad) y reemplazar solo XZ
-        Vector3 targetVelocity = _moveDir * moveSpeed;
-        targetVelocity.y = _rb.linearVelocity.y;
-
-        _rb.linearVelocity = targetVelocity;
+        Vector3 velocity = _moveDirection * moveSpeed;
+        velocity.y = _rb.linearVelocity.y;
+        _rb.linearVelocity = velocity;
     }
 
     private void HandleRotation()
     {
-        if (_moveDir == Vector3.zero) return;
+        if (_moveDirection.sqrMagnitude < 0.001f)
+            return;
 
-        Quaternion targetRot = Quaternion.LookRotation(_moveDir);
-        transform.rotation = Quaternion.RotateTowards(
-            transform.rotation,
-            targetRot,
-            rotationSpeed * Time.fixedDeltaTime
-        );
+        Quaternion targetRotation = Quaternion.LookRotation(_moveDirection, Vector3.up);
+        Quaternion nextRotation = Quaternion.RotateTowards(_rb.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
+        _rb.MoveRotation(nextRotation);
     }
-
 }
