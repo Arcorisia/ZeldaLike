@@ -21,7 +21,8 @@ public class InputHandler : MonoBehaviour
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
         characterController.Move(new Vector2(h, v));
-        if(Input.GetButtonDown("Jump"))
+        // Usar KeyDown para asegurar una sola ejecución por pulsación de Space
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             attack.PerformAttack();
         }
