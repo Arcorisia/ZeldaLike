@@ -21,7 +21,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties: 
+  m_LockedProperties: _MainTex
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -97,7 +97,7 @@ Material:
     m_Floats:
     - PixelSnap: 0
     - _AtmosphereThickness: 1
-    - _Brightness: -8.3
+    - _Brightness: -6.22
     - _BumpScale: 1
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
@@ -132,7 +132,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _DissolveEdgeColor: {r: 1, g: 0, b: 0, a: 1}
+    - _DissolveEdgeColor: {r: 0, g: 0.46051836, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _FlowSpeed: {r: 0, g: 0, b: 0, a: 0}
     - _FresnelColor: {r: 0, g: 0, b: 0, a: 1}
@@ -141,6 +141,6 @@ Material:
     - _OverlayFlowSpeed: {r: 0, g: 0, b: 0, a: 0}
     - _SkyTint: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _Tint: {r: 0.5, g: 0.5, b: 0.5, a: 0.5}
-    - _TintColor: {r: 0.29559743, g: 0.29559743, b: 0.29559743, a: 1}
+    - _TintColor: {r: 0, g: 0.24783468, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

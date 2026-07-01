@@ -45,6 +45,14 @@ public class Interact : MonoBehaviour
     public AudioClip[] sonidosNumeros = new AudioClip[10];
     public GameObject[] spritesNumeros = new GameObject[10];
 
+    [Header("Bonos de Mana")]
+    public TopDownCharacterController topDownCharacterController;
+    public Attack attack;
+    public float segundosParaActivarBono = 9f;
+    public float duracionBono = 5f;
+    public float bonoMoveSpeed = 4f;
+    public float bonoDamage = 5f;
+
     [Header("Traslado con tecla I")]
     public Transform puntoACompartido;
     public Transform puntoBCompartido;
@@ -84,6 +92,13 @@ public class Interact : MonoBehaviour
     private int indiceNumeroPresionado = -1;
     private AudioClip clipSonidoGritoOriginal;
     private bool muerteProcesada = false;
+    private float tiempoNumeroPresionado = 0f;
+    private bool bonoMoveSpeedActivo = false;
+    private bool bonoDamageActivo = false;
+    private bool bonoMoveSpeedUsadoEnPresion = false;
+    private bool bonoDamageUsadoEnPresion = false;
+    private Coroutine rutinaBonoMoveSpeed;
+    private Coroutine rutinaBonoDamage;
     private const int manaMaximo = 30;
 
     private void Start()
@@ -95,6 +110,16 @@ public class Interact : MonoBehaviour
             clipSonidoGritoOriginal = sonidoGrito.clip;
         }
 
+        if (topDownCharacterController == null && InputHandler.instance != null)
+        {
+            topDownCharacterController = InputHandler.instance.characterController;
+        }
+
+        if (attack == null && InputHandler.instance != null)
+        {
+            attack = InputHandler.instance.attack;
+        }
+
         InicializarTurnosTeclaI();
         GuardarPosicionOriginalGrito();
         ActualizarObjetosDeGrito();
@@ -104,6 +129,12 @@ public class Interact : MonoBehaviour
 
     private void Update()
     {
+        if (Muerte)
+        {
+            ProcesarMuerte();
+            return;
+        }
+
         contadorTiempoDeVida += Time.deltaTime;
         temporizadorSegundo += Time.deltaTime;
 
@@ -124,11 +155,6 @@ public class Interact : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.I))
         {
             IniciarTrasladosTeclaI();
-        }
-
-        if (Muerte)
-        {
-            ProcesarMuerte();
         }
     }
 
@@ -318,6 +344,7 @@ public class Interact : MonoBehaviour
                     ActivarGritoBlancoPorTeclaNumerica();
                 }
 
+                RevisarBonosPorNumeroPresionado();
                 return;
             }
 
@@ -384,6 +411,9 @@ public class Interact : MonoBehaviour
     private void ActivarNumero(int indice)
     {
         indiceNumeroPresionado = indice;
+        tiempoNumeroPresionado = 0f;
+        bonoMoveSpeedUsadoEnPresion = false;
+        bonoDamageUsadoEnPresion = false;
 
         if (rutinaGrito == null && audioSourceNumeros != null && indice < sonidosNumeros.Length && sonidosNumeros[indice] != null)
         {
@@ -429,6 +459,73 @@ public class Interact : MonoBehaviour
         }
     }
 
+    private void RevisarBonosPorNumeroPresionado()
+    {
+        if (indiceNumeroPresionado < 0 || mana <= 0)
+        {
+            return;
+        }
+
+        tiempoNumeroPresionado += Time.deltaTime;
+
+        if (tiempoNumeroPresionado < segundosParaActivarBono)
+        {
+            return;
+        }
+
+        if (indiceNumeroPresionado == 0 && !bonoMoveSpeedActivo && !bonoMoveSpeedUsadoEnPresion)
+        {
+            bonoMoveSpeedUsadoEnPresion = true;
+            rutinaBonoMoveSpeed = StartCoroutine(RutinaBonoMoveSpeed());
+        }
+
+        if (indiceNumeroPresionado == 2 && !bonoDamageActivo && !bonoDamageUsadoEnPresion)
+        {
+            bonoDamageUsadoEnPresion = true;
+            rutinaBonoDamage = StartCoroutine(RutinaBonoDamage());
+        }
+    }
+
+    private IEnumerator RutinaBonoMoveSpeed()
+    {
+        bonoMoveSpeedActivo = true;
+
+        if (topDownCharacterController != null)
+        {
+            topDownCharacterController.AddMoveSpeed(bonoMoveSpeed);
+        }
+
+        yield return new WaitForSeconds(duracionBono);
+
+        if (topDownCharacterController != null)
+        {
+            topDownCharacterController.AddMoveSpeed(-bonoMoveSpeed);
+        }
+
+        bonoMoveSpeedActivo = false;
+        rutinaBonoMoveSpeed = null;
+    }
+
+    private IEnumerator RutinaBonoDamage()
+    {
+        bonoDamageActivo = true;
+
+        if (attack != null)
+        {
+            attack.damage += bonoDamage;
+        }
+
+        yield return new WaitForSeconds(duracionBono);
+
+        if (attack != null)
+        {
+            attack.damage -= bonoDamage;
+        }
+
+        bonoDamageActivo = false;
+        rutinaBonoDamage = null;
+    }
+
     private void ActivarGritoBlancoPorTeclaNumerica()
     {
         Grito = true;
@@ -466,6 +563,9 @@ public class Interact : MonoBehaviour
         }
 
         indiceNumeroPresionado = -1;
+        tiempoNumeroPresionado = 0f;
+        bonoMoveSpeedUsadoEnPresion = false;
+        bonoDamageUsadoEnPresion = false;
 
         if (rutinaGrito != null)
         {
@@ -693,8 +793,8 @@ public class Interact : MonoBehaviour
         trasladoTeclaIEnMovimiento = false;
         OrdenarTurnosConLibroEnPuntoA();
         ActivarGameOverDelLibro();
+        DesactivarInputsDelPlayer();
         CrearReiniciadorDeEscena();
-        DesactivarPlayer();
     }
 
     private void OrdenarTurnosConLibroEnPuntoA()
@@ -780,12 +880,32 @@ public class Interact : MonoBehaviour
         return null;
     }
 
-    private void DesactivarPlayer()
+    private void DesactivarInputsDelPlayer()
     {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
+        InputHandler inputHandler = InputHandler.instance;
+        if (inputHandler == null)
         {
-            player.SetActive(false);
+            inputHandler = FindObjectOfType<InputHandler>();
+        }
+
+        if (inputHandler != null)
+        {
+            inputHandler.canUseInput = false;
+
+            if (topDownCharacterController == null)
+            {
+                topDownCharacterController = inputHandler.characterController;
+            }
+        }
+
+        if (topDownCharacterController == null)
+        {
+            topDownCharacterController = FindObjectOfType<TopDownCharacterController>();
+        }
+
+        if (topDownCharacterController != null)
+        {
+            topDownCharacterController.Move(Vector2.zero);
         }
     }
 

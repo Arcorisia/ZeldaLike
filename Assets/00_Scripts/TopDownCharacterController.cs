@@ -57,6 +57,11 @@ public class TopDownCharacterController : MonoBehaviour
         _moveDirection = direction.sqrMagnitude > 0.001f ? direction.normalized : Vector3.zero;
     }
 
+    public void AddMoveSpeed(float amount)
+    {
+        moveSpeed += amount;
+    }
+
     private void FixedUpdate()
     {
         HandleMovement();
