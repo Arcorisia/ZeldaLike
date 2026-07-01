@@ -847,16 +847,27 @@ public class Interact : MonoBehaviour
 
     private void ActivarGameOverDelLibro()
     {
+        ActivarHijoDelLibro("Game Over");
+    }
+
+    public void ActivarLibroEnPuntoAConHijo(string nombreHijo)
+    {
+        OrdenarTurnosConLibroEnPuntoA();
+        ActivarHijoDelLibro(nombreHijo);
+    }
+
+    private void ActivarHijoDelLibro(string nombreHijo)
+    {
         TrasladoConTeclaI libro = BuscarTrasladoPorNombre("Libro");
         if (libro == null || libro.objeto == null)
         {
             return;
         }
 
-        Transform gameOver = BuscarHijoPorNombre(libro.objeto.transform, "Game Over");
-        if (gameOver != null)
+        Transform hijo = BuscarHijoPorNombre(libro.objeto.transform, nombreHijo);
+        if (hijo != null)
         {
-            gameOver.gameObject.SetActive(true);
+            hijo.gameObject.SetActive(true);
         }
     }
 
