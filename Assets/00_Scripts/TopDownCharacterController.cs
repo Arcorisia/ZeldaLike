@@ -66,7 +66,7 @@ public class TopDownCharacterController : MonoBehaviour
     private void HandleMovement()
     {
         Vector3 velocity = _moveDirection * moveSpeed;
-        velocity.y = _rb.linearVelocity.y;
+        velocity.y = _rb.linearVelocity.y + Physics.gravity.y * Time.fixedDeltaTime;
         _rb.linearVelocity = velocity;
     }
 
